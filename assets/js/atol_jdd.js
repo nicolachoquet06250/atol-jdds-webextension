@@ -76,10 +76,15 @@ const insertSubStringBetweenNCharacters = (str, substr, n) => {
 };
 
 /**
+ * @param {HTMLElement} element
+ */
+const resetElementContent = element => (element.innerHTML = '');
+
+/**
  * @param {{nd?: String, email?: String, password?: String, case?: String}} data
  * @returns {string}
  */
-const jddArrayTemplate = (data) => `<tr>
+const jddArrayTemplate = data =>/*html*/`<tr>
     <td>
         ${data.nd !== undefined ? '<a href="#" data-command="insert-nd" title="insérer dans la page">' : ''}
             ${data.nd || '<center> // </center>'}
@@ -98,19 +103,63 @@ const jddArrayTemplate = (data) => `<tr>
  * @param {string} type
  * @returns {string}
  */
-const jdds2HtmlArray = (jdds, type) => getJddsOfType(jdds, type).reduce((r, c) =>  `${r}${jddArrayTemplate(c)}`, '');
+const jdds2HtmlArray = (jdds, type) => getJddsOfType(jdds, type)
+    .reduce((r, c) => `${r}${jddArrayTemplate(c)}`, '');
+
+const typesTabsToHtml = types => types.map(
+    /**
+     * @param {string} e
+     */
+    e =>/*html*/`<div data-target="${e}" class="sub-tab">
+        ${e.toUpperCase()}
+    </div>`
+).join('\n');
+
+const environmentsTabsToHtml = environments => environments.map(
+    /**
+     * @param {string} e
+     */
+    e =>/*html*/`<th data-target="${e}" class="tab">
+        ${e.toUpperCase()}
+    </th>`
+).join('\n');
+
+const typesContentToHtml = (jdds, types, platform) => 
+    jdds[platform].length === 0 
+        ? `Aucun JDD pour la ${platform}` 
+            : types.map(type =>/*html*/`
+                <table data-type="${type}" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th> ND </th>
+                            <th> EMAIL </th>
+                            <th> MDP </th>
+                            <th> CAS </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${jdds2HtmlArray(jdds[platform], type.toUpperCase()) === '' ?/*html*/`<tr>
+                            <td colspan="4"> Il n'y a aucun JDD de ce type </td>
+                        </tr>` : jdds2HtmlArray(jdds[platform], type.toUpperCase())}
+                    </tbody>
+                </table>
+            `).join('\n');
 
 /**
  * @param {Element} subTab 
  */
 const setNewActiveSubTab = subTab => {
+    const target = subTab.getAttribute('data-target');
+
     Array.from(document.querySelectorAll('.sub-tab.active'))
         ?.map(t => t?.classList.remove('active'));
+
     subTab?.classList.add('active');
 
     Array.from(document.querySelectorAll('[data-type].active'))
         ?.map(t => t?.classList.remove('active'));
-    Array.from(document.querySelectorAll(`[data-type="${subTab.getAttribute('data-target')}"]`))
+
+    Array.from(document.querySelectorAll(`[data-type="${target}"]`))
         ?.map(t => t?.classList.add('active'));
 };
 
@@ -121,15 +170,20 @@ const setNewActiveSubTab = subTab => {
 const setNewActiveTab = (tab, subTabs) => {
     if (!tab.classList.contains('active')) {
         const activeTab = document.querySelector('#popup_header > thead tr th.active');
+        const activeTarget = activeTab.getAttribute('data-target');
+        const target = tab.getAttribute('data-target');
+
         activeTab.classList.remove('active');
-        document.querySelector(`.${activeTab.getAttribute('data-target')}-tab-content`)?.classList.remove('active');
+        
+        document.querySelector(`.${activeTarget}-tab-content`)?.classList.remove('active');
 
         tab.classList.add('active');
-        document.querySelector(`.${tab.getAttribute('data-target')}-tab-content`)?.classList.add('active')
+        document.querySelector(`.${target}-tab-content`)?.classList.add('active')
     
-        const activeSubTab = document.querySelector('.sub-tab.active') 
-            ? document.querySelector('.sub-tab.active') : subTabs[0];
-        setNewActiveSubTab(activeSubTab);
+        setNewActiveSubTab(
+            document.querySelector('.sub-tab.active') 
+                ? document.querySelector('.sub-tab.active') : subTabs[0]
+        );
     }
 };
 
@@ -287,58 +341,26 @@ const actions = {
 (initializeJDDTable = async () => {
     Loader.create();
 
-    const r = await (Promise.all([
-        getJdds(),
-        getTypes(),
-        getEnvironments()
-    ]).then(r => ({
-        jdds: r[0],
-        types: r[1],
-        environments: r[2]
-    })));
+    const r = await (
+        Promise.all([ getJdds(), getTypes(), getEnvironments() ])
+            .then(r => ({ jdds: r[0], types: r[1], environments: r[2] }))
+    );
 
     const { jdds, environments, types } = r;
 
-    document.querySelector('.environments-list').innerHTML = environments
-        .map((e) =>
-            `<th data-target="${e}" class="tab"> ${e.toUpperCase()} </th>`
-        ).join('\n');
+    document.querySelector('.environments-list').innerHTML = environmentsTabsToHtml(environments);
+    document.querySelector('.types-list').innerHTML = typesTabsToHtml(types);
 
-    document.querySelector('.types-list').innerHTML = types
-        .map((e) =>
-            `<div data-target="${e}" class="sub-tab"> ${e.toUpperCase()} </div>`
-        ).join('\n');
+    resetElementContent(document.querySelector('.contents-container'));
 
-    document.querySelector('.contents-container').innerHTML = '';
-
-    for (const platform of environments) {
-        document.querySelector('.contents-container').innerHTML += `
+    document.querySelector('.contents-container').innerHTML = environments.map(platform =>/*html*/`
         <tr>
             <td colspan="4">
                 <div class="${platform}-tab-content tab-content">
-                    ${jdds[platform].length === 0 
-                        ? `Aucun JDD pour la ${platform}` 
-                            : types.map(t => `
-                                <table data-type="${t}" style="width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th> ND </th>
-                                            <th> EMAIL </th>
-                                            <th> MDP </th>
-                                            <th> CAS </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${jdds2HtmlArray(jdds[platform], t.toUpperCase()) === '' ? `<tr>
-                                            <td colspan="4"> Il n'y a aucun JDD de ce type </td>
-                                        </tr>` : jdds2HtmlArray(jdds[platform], t.toUpperCase())}
-                                    </tbody>
-                                </table>
-                            `).join('\n')}
+                    ${typesContentToHtml(jdds, types, platform)}
                 </div>
             </td>
-        </tr>`;
-    }
+        </tr>`).join('\n');
 
     Loader.remove();
 })().then(() => {
@@ -430,13 +452,8 @@ const actions = {
                         case 'prod':
                             global.env = env;
                             let id = 0;
-                            return Array.from(tabs).reduce((r, c) => {
-                                if (c.getAttribute('data-target') !== env) {
-                                    id++;
-                                    return r;
-                                }
-                                return id;
-                            }, 0);
+                            return Array.from(tabs).reduce((r, c) => c.getAttribute('data-target') !== env 
+                                ? (() => { id++; return r; }) : id, 0);
                         default:
                             global.env = 'no-env';
                             injectWarningInPopup('Aucun environnement détécté, vous êtes probablement hors du projet ATOL.');
@@ -478,21 +495,19 @@ const actions = {
         document.addEventListener('click', (e) => {
             const { target } = e;
             const action = target.getAttribute('data-command');
+
             if (action) {
                 const actionToCall = action.replace(/-/g, '_');
 
                 if (actionToCall in actions) actions[actionToCall](e);
             }
         });
-    }).catch(e => {
-        console.error(e);
-    });
-
-    /* ** ****************************************************************** ** */
-    /* ** ECOUTE D'UN MESSAGE VENANT DU SCRIPT DE CONTENU ****************** ** */
-    /* ** ****************************************************************** ** */
-
+    }).catch(console.error);
 });
+
+/* ** ****************************************************************** ** */
+/* ** ECOUTE D'UN MESSAGE VENANT DU SCRIPT DE CONTENU ****************** ** */
+/* ** ****************************************************************** ** */
 
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.error) {
