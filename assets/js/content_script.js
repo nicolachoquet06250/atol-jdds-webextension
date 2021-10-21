@@ -89,6 +89,10 @@
                     .then(r => r.text())
                     .then(() => (window.location.href = '/?page=accueil'))
             }
+        },
+        redirect_extension_location: message => {
+            console.log(message)
+            
         }
     };
 
