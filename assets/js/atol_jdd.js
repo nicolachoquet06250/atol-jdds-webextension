@@ -106,14 +106,44 @@ const jddArrayTemplate = data =>/*html*/`<tr>
 const jdds2HtmlArray = (jdds, type) => getJddsOfType(jdds, type)
     .reduce((r, c) => `${r}${jddArrayTemplate(c)}`, '');
 
-const typesTabsToHtml = types => types.map(
-    /**
-     * @param {string} e
-     */
-    e =>/*html*/`<div data-target="${e}" class="sub-tab">
-        ${e.toUpperCase()}
-    </div>`
-).join('\n');
+/**
+ * @param {Element[]} types 
+ * @param {Number} max 
+ * @returns {string}
+ */
+const typesTabsToHtml = (types, max = 4) => {
+    let cmp = 0;
+
+    return types.reduce((r, c) => {
+        const result =/*html*/`
+            ${r}
+            ${cmp < max ?/*html*/`<div data-target="${c}" class="sub-tab"> ${c.toUpperCase()} </div>` : ''}
+        `;
+        cmp++;
+        return result;
+    }, '') + (() => {
+        if (types.length > max) {
+            cmp = 0;
+
+            return/*html*/`
+                <div class="sub-tab dropdown" style="flex: 0.3;">...</div>
+
+                <div class="dropdown-content">
+                    ${types.reduce((r, c) => {
+                        const result = /*html*/`
+                            ${r}
+                            ${cmp >= max ?/*html*/`<div class="sub-tab"> ${c.toUpperCase()} </div>` : ''}
+                        `
+                        cmp++;
+                        return result;
+                    }, '')}
+                </div>
+            `;
+        } else {
+            return '';
+        }
+    })();
+};
 
 const environmentsTabsToHtml = environments => environments.map(
     /**
@@ -151,7 +181,7 @@ const typesContentToHtml = (jdds, types, platform) =>
 const setNewActiveSubTab = subTab => {
     const target = subTab.getAttribute('data-target');
 
-    Array.from(document.querySelectorAll('.sub-tab.active'))
+    Array.from(document.querySelectorAll('.sub-tab:not(.dropdown).active'))
         ?.map(t => t?.classList.remove('active'));
 
     subTab?.classList.add('active');
@@ -169,7 +199,9 @@ const setNewActiveSubTab = subTab => {
  */
 const setNewActiveTab = (tab, subTabs) => {
     if (!tab.classList.contains('active')) {
-        const activeTab = document.querySelector('#popup_header > thead tr th.active');
+        const activeTab = document.querySelector('#popup_header .tab.active') 
+            ? document.querySelector('#popup_header .tab.active') 
+                : Array.from(document.querySelectorAll('#popup_header .tab'))[0];
         const activeTarget = activeTab.getAttribute('data-target');
         const target = tab.getAttribute('data-target');
 
@@ -181,8 +213,8 @@ const setNewActiveTab = (tab, subTabs) => {
         document.querySelector(`.${target}-tab-content`)?.classList.add('active')
     
         setNewActiveSubTab(
-            document.querySelector('.sub-tab.active') 
-                ? document.querySelector('.sub-tab.active') : subTabs[0]
+            document.querySelector('.sub-tab:not(.dropdown).active') 
+                ? document.querySelector('.sub-tab:not(.dropdown).active') : subTabs[0]
         );
     }
 };
@@ -286,6 +318,15 @@ const actions = {
                 console.error(`Injection du nd impossible`, e);
             }
         })();
+
+        /**
+         * ouvrir un nouvel onglet avec l'url de l'extension
+         */
+        /*(async () => {
+            browser.tabs.create({
+                url: window.location.href
+            });
+        })();*/
     },
 
     /**
@@ -349,7 +390,15 @@ const actions = {
     const { jdds, environments, types } = r;
 
     document.querySelector('.environments-list').innerHTML = environmentsTabsToHtml(environments);
-    document.querySelector('.types-list').innerHTML = typesTabsToHtml(types);
+    document.querySelector('.types-list').innerHTML = typesTabsToHtml([...types, 'toto', 'test', 'tata']);
+
+    document.querySelector('.sub-tab.dropdown')?.addEventListener('click', () => {
+        if (document.querySelector('.dropdown-content')?.classList.contains('active')) {
+            document.querySelector('.dropdown-content')?.classList.remove('active');
+        } else {
+            document.querySelector('.dropdown-content')?.classList.add('active');
+        }
+    });
 
     resetElementContent(document.querySelector('.contents-container'));
 
@@ -374,7 +423,7 @@ const actions = {
      */
     const [tabs, subTabs] = (initializeTabs = () => {
         const tabs = document.querySelectorAll('.tab');
-        const subTabs = document.querySelectorAll('.sub-tab');
+        const subTabs = document.querySelectorAll('.sub-tab:not(.dropdown)');
 
         /**
          * @param {Function|null} getActiveTabId
@@ -398,14 +447,10 @@ const actions = {
                 }
             }
 
-            Array.from(tabs).map(t => {
-                t.classList.remove('active');
-                document.querySelector(`.${t.getAttribute('data-target')}-tab-content`)?.classList.remove('active')
-            });
-
-            const activeTab = tabs[activeTabId];
-            activeTab.classList.add('active');
-            document.querySelector(`.${activeTab.getAttribute('data-target')}-tab-content`).classList.add('active');
+            setNewActiveTab(
+                Array.from(tabs)[activeTabId], 
+                Array.from(document.querySelectorAll('.sub-tab:not(.dropdown)'))
+            );
         })();
 
         (initTypes = (getActiveTabId = null, type = subTabs[0]?.getAttribute('data-target')) => {
@@ -436,7 +481,7 @@ const actions = {
             document.querySelector(`[data-type="${type}"]`)?.classList.add('active');
         })();
 
-        document.querySelector('#popup_types .sub-tab').classList.add('active');
+        document.querySelector('#popup_types .sub-tab:not(.dropdown)').classList.add('active');
 
         browser.runtime.onMessage.addListener((request) => {
             if (request.environment) {
@@ -453,7 +498,7 @@ const actions = {
                             global.env = env;
                             let id = 0;
                             return Array.from(tabs).reduce((r, c) => c.getAttribute('data-target') !== env 
-                                ? (() => { id++; return r; }) : id, 0);
+                                ? (() => { id++; return r; })() : id, 0);
                         default:
                             global.env = 'no-env';
                             injectWarningInPopup('Aucun environnement détécté, vous êtes probablement hors du projet ATOL.');
