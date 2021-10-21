@@ -13,17 +13,10 @@
 
         while ((m = regex.exec(str)) !== null) {
             // This is necessary to avoid infinite loops with zero-width matches
-            if (m.index === regex.lastIndex) {
-                regex.lastIndex++;
-            }
+            if (m.index === regex.lastIndex) regex.lastIndex++;
 
             // The result can be accessed through the `m`-variable.
-            m.forEach((match, groupIndex) => {
-                matches.push({
-                    groupIndex,
-                    match
-                });
-            });
+            m.forEach((match, groupIndex) => { matches.push({ groupIndex, match }); });
         }
 
         return matches;
@@ -33,12 +26,9 @@
         const matchesOutOfProd = getMatches(`${window.location.protocol}//${window.location.hostname}`, /https:\/\/(classic-)?(dev|rec|preprod)-fea.staging.orange.fr/g);
         const matchesProd = getMatches(`${window.location.protocol}//${window.location.hostname}`, /https:\/\/tester-depanner-vos-services.orange.fr/g);
 
-        if (matchesOutOfProd.length > 0) {
-            return matchesOutOfProd[2].match;
-        } else if (matchesProd.length > 0) {
-            return 'prod';
-        }
-        return 'not-atol';
+        return matchesOutOfProd.length > 0 
+            ? matchesOutOfProd[2].match : (matchesProd.length > 0 
+                ? 'prod' : 'non-atol');
     };
 
     /* ** ****************************************************************** ** */
@@ -72,13 +62,9 @@
      * @param {Record<string, string|boolean>} object
      */
     const objectToQueryString = (object) =>
-        Object.keys(object).reduce((r, c) => {
-            if (r === '') {
-                return `?${object[c] === true ? c : `${c}=${object[c]}`}`;
-            } else {
-                return `${r}&${object[c] === true ? c : `${c}=${object[c]}`}`;
-            }
-        }, '');
+        Object.keys(object).reduce((r, c) => r === '' 
+            ? `?${object[c] === true ? c : `${c}=${object[c]}`}` 
+                : `${r}&${object[c] === true ? c : `${c}=${object[c]}`}`, '');
 
     /* ** ****************************************************************** ** */
     /* ** DEFINITION DES ACTIONS ******************************************* ** */
@@ -88,30 +74,20 @@
         back_to_home: () => {
             window.location.href = `/${objectToQueryString({ page: 'accueil', authentagain: true })}`
         },
-        insert_nd_in_page: (message) => {
-            const phoneInput = document.querySelector('input[type="tel"]');
-
-            if (phoneInput) {
+        insert_nd_in_page: message => {
+            if ((phoneInput = document.querySelector('input[type="tel"]'))) {
                 phoneInput.value = message.nd;
                 phoneInput.classList.add('is-valid');
                 phoneInput.classList.remove('form-control-empty');
 
-                const validationButton = document.querySelector('.atol-home-btn');
-
-                if (validationButton) {
-                    validationButton.click();
-                }
+                if ((validationButton = document.querySelector('.atol-home-btn'))) validationButton.click();
             }
         },
-        ident_with_email_and_password: (message) => {
-            const environment = getEnvironment();
-
-            if (environment !== 'not-atol') {
+        ident_with_email_and_password: message => {
+            if ((environment = getEnvironment()) !== 'not-atol') {
                 fetch(wassup[environment](message.email, message.password))
                     .then(r => r.text())
-                    .then(() => {
-                        window.location.href = '/?page=accueil';
-                    })
+                    .then(() => (window.location.href = '/?page=accueil'))
             }
         }
     };
@@ -124,7 +100,7 @@
      * On écoute les messages du script de la popup pour
      * déclencher les différentes action à éféctuer sur la page.
      */
-    browser.runtime.onMessage.addListener((message) => {
+    browser.runtime.onMessage.addListener(message => {
         if (isOrangeDomain()) {
             if (message.command in actions) actions[message.command](message);
         } else {
