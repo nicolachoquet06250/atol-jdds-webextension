@@ -1,0 +1,161 @@
+html, body {
+    width: 700px;
+    height: 500px;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay .spinner {
+    display: inline-block;
+    width: 2.5rem;
+    height: 2.5rem;
+    vertical-align: -.125em;
+    border: .375rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-animation: .75s linear infinite spinner-border;
+    -moz-animation: .75s linear infinite spinner-border;
+    animation: .75s linear infinite spinner-border;
+}
+
+@keyframes spinner-border {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#popup_header {
+    position: fixed;
+    top: 0;
+    border-bottom: 1px solid black;
+}
+
+#popup_header > thead tr,
+#popup_types {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#popup_header > thead tr th.tab,
+#popup_types div.sub-tab {
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    background: white;
+}
+
+#popup_header > thead tr th.tab.active,
+#popup_header > thead tr th.tab:hover,
+#popup_types div.sub-tab.active,
+#popup_types div.sub-tab:hover {
+    background: #FF7900;
+    border-bottom: 2px solid black;
+}
+
+#popup_header > thead tr th.tab:hover,
+#popup_types div.sub-tab:hover {
+    background: #FF8600;
+}
+
+#popup_header,
+#popup_content,
+#popup_types {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#popup_types {
+    position: fixed;
+    top: 31px;
+    border-bottom: 1px solid black;
+}
+
+#popup_types div:hover,
+#popup_types div.active {
+    background: #FF7900;
+    border-bottom: 2px solid black;
+}
+
+#popup_content {
+    margin-top: 60px;
+}
+
+#popup_content .tab-content > table tbody tr td:last-child {
+    max-width: 300px;
+}
+
+#popup_content .tab-content {
+    display: none;
+    padding: 5px;
+}
+
+#popup_content .tab-content [data-type] {
+    display: none;
+}
+
+#popup_content .tab-content.active [data-type].active {
+    display: table;
+}
+
+#popup_content .tab-content.active {
+    display: block;
+}
+
+#back-to-home {
+    margin-bottom: 10px;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-warning:hover, .btn-warning:focus, .btn-dark:hover, .btn-dark:focus {
+    color: #fff;
+    background-color: #555;
+    border-color: #555;
+}
+
+.btn:hover, .btn:focus, .btn:active {
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-block;
+    font-family: "HelvNeueOrange", "Helvetica Neue", Helvetica, Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-weight: 700;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: 0.8125rem 2.8125rem;
+    font-size: 1rem;
+    line-height: 1.375rem;
+    border-radius: 0;
+    max-width: 21.875rem;
+    white-space: normal;
+    outline-offset: 0.25rem;
+    transition: outline-offset .15s ease-in-out;
+    background: black;
+    color: white;
+    cursor: pointer;
+}
+
+button, [type="button"], [type="reset"], [type="submit"] {
+    -webkit-appearance: button;
+}

@@ -1,0 +1,31 @@
+{
+    "description": "listing des jdd ATOL",
+    "manifest_version": 2,
+    "name": "ATOL JDD",
+    "version": "0.0.0.1",
+    "homepage_url": "https://tester-depanner-vos-services.orange.fr",
+    "icons": {
+        "48": "assets/icons/logo-orange.png"
+    },
+
+    "permissions": [
+        "activeTab",
+        "webRequest",
+        "https://atol-jdds.orange.nicolaschoquet.fr/*",
+        "https://tb2n1.orange.fr/*",
+        "https://sso.orange.fr/*"
+    ],
+
+    "browser_action": {
+        "default_icon": {
+            "16": "assets/icons/logo-orange.png",
+            "32": "assets/icons/logo-orange.png"
+        },
+        "default_title": "ATOL JDD",
+        "default_popup": "./index.html"
+    },
+
+    "web_accessible_resources": [
+        "assets/icons/logo-orange.png"
+    ]
+}
