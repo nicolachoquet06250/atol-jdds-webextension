@@ -159,3 +159,17 @@ html, body {
 button, [type="button"], [type="reset"], [type="submit"] {
     -webkit-appearance: button;
 }
+
+.dropdown-content {
+    position: absolute;
+    right: 0;
+    top: 32px;
+    width: 150px;
+    border: 1px solid black;
+    border-top: none;
+    display: none;
+}
+
+.dropdown-content.active {
+    display: block;
+}
